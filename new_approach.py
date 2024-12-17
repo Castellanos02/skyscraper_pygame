@@ -1,37 +1,60 @@
 import pygame
 import copy
-# import skyscraper as sk
+import time
+import math
 
-import copy
-grid_length = 0
-left_clues = []
-right_clues = []
-top_clues = []
-bottom_clues = []
-groupings = {}
-neighbors = {}
-cells = ()
+counter = 0
 
+import itertools
 
-def create_groupings_and_neighbors(left_clues, right_clues, top_clues, bottom_clues):
-  global groupings
-  global neighbors
-  global cells
+def is_valid_view(row, view):
+    max_height = 0
+    visible = 0
+    for height in row:
+        if height > max_height:
+            visible += 1
+            max_height = height
+    return visible == view
 
-  rows = [chr(ord('@')+number) for number in range(1, grid_length + 1)]
+def is_valid_solution(grid, top, bottom, left, right):
+    n = len(grid)
+    for i in range(n):
+        if top[i] > 0 and not is_valid_view(grid[i], top[i]):
+            return False
+        if bottom[i] > 0 and not is_valid_view(grid[i][::-1], bottom[i]):
+            return False
+        column = [grid[j][i] for j in range(n)]
+        if left[i] > 0 and not is_valid_view(column, left[i]):
+            return False
+        if right[i] > 0 and not is_valid_view(column[::-1], right[i]):
+            return False
+    return True
 
-  columns = [str(number) for number in range(1, grid_length+1)]
+def solve_skyscraper(n, top, bottom, left, right):
+    all_permutations = list(itertools.permutations(range(1, n+1)))
+    global counter
+    counter = 0
+    for grid in itertools.product(all_permutations, repeat=n):
+        counter += 1
+        if counter > 100000:
+           backtrack_states.text = "BT: 100,000+"
+           break
+        # print(f"\r{counter}", end="", flush=True)
+        # time.sleep(0.0002)  # Uncommenting will add a small delay for visibility
+        if is_valid_solution(grid, top, bottom, left, right):
+            return grid
+    
+    return None
 
-  cells = tuple(letter + digit for letter in rows for digit in columns)
+def print_solution(solution):
+    if solution:
+        # Transpose the grid
+        transposed = list(zip(*solution))
+        # for row in transposed:
+            # print(' '.join(map(str, row)))
+    else:
+        print("No solution found")
 
-  groupings = {c: tuple([[c[0] + digit for digit in columns],[letter + c[1] for letter in rows]])  for c in cells}
-
-  neighbors = {c: set(tuple([c[0] + digit for digit in columns] + [letter + c[1] for letter in rows])) for c in cells}
-
-  for cell in cells:
-    neighbors[cell].remove(cell)
-
-  return cells, groupings, neighbors
 
 def process_clues(grid, grid_length, clues, direction):
 
@@ -136,13 +159,10 @@ def remove_value(grid, cell, possible_value):
       return None
     if count == 1 and not assign(grid, t, possible_value):
       return None
-
   return True
 
 def assign(grid, cell, possible_value):
 
-  # Two possiblities when invoking this function
-  # If the assigned cell only has one possible value, then remove that possible value from all neighbors
   if possible_value in grid[cell] and len(grid[cell]) == 1:
     for val in grid[cell]:
       for neighbor in neighbors[cell]:
@@ -150,7 +170,6 @@ def assign(grid, cell, possible_value):
           return None
     return grid
 
-  # If the assigned cell has other possible values, call remove_value() to remove all the other values from possibility for this cell
   if possible_value in grid[cell]:
 
       for value in grid[cell].copy():
@@ -159,117 +178,7 @@ def assign(grid, cell, possible_value):
             return None
 
       return grid
-
   return None
-
-def sequence_filtration(grid):
-
-  temp_grid = {}
-  for i in range(grid_length):
-    if left_clues[i] != 0:
-      valid_sequences = get_valid_sequences('L', left_clues[i], i)
-      cells = tuple([chr(ord('@') + i+1) + str(digit) for digit in range(1, grid_length+1)])
-      for sequence in valid_sequences:
-        for j in range(len(sequence)):
-          if cells[j] not in temp_grid:
-            temp_grid[cells[j]] = set()
-
-          temp_grid[cells[j]].add(sequence[j])
-
-    if right_clues[i] != 0:
-      valid_sequences = get_valid_sequences('R', right_clues[i], i)
-      cells = tuple([chr(ord('@') + i+1) + str(digit) for digit in range(grid_length, 0, -1)])
-      for sequence in valid_sequences:
-        for j in range(len(sequence)):
-          if cells[j] not in temp_grid:
-            temp_grid[cells[j]] = set()
-
-          temp_grid[cells[j]].add(sequence[j])
-
-    if top_clues[i] != 0:
-      valid_sequences = get_valid_sequences('T', top_clues[i], i)
-      cells = tuple([chr(ord('@') + j+1) + str(i+1) for j in range(grid_length)])
-      for sequence in valid_sequences:
-        for j in range(len(sequence)):
-          if cells[j] not in temp_grid:
-            temp_grid[cells[j]] = set()
-
-          temp_grid[cells[j]].add(sequence[j])
-
-    if bottom_clues[i] != 0:
-      valid_sequences = get_valid_sequences('B', bottom_clues[i], i)
-      cells = tuple([chr(ord('@') + j+1) + str(i+1) for j in range(grid_length-1, -1, -1)])
-      for sequence in valid_sequences:
-        for j in range(len(sequence)):
-          if cells[j] not in temp_grid:
-            temp_grid[cells[j]] = set()
-
-          temp_grid[cells[j]].add(sequence[j])
-
-  return temp_grid
-
-def get_valid_sequences(direction, clue, i):
-  constraints = get_constraints_list(direction, i)
-  sequences = unique_sequences(constraints)
-  valid_sequences = []
-
-  for sequence in sequences:
-    visible = 0
-    max_value = 0
-    for value in sequence:
-      if value > max_value:
-        visible += 1
-        max_value = value
-
-    if clue == visible:
-      valid_sequences.append(sequence)
-
-  return valid_sequences
-
-def get_constraints_list(direction, i):
-  constraints = []
-
-  if direction == 'L':
-    for j in range(1, grid_length + 1):
-      cell = chr(ord('@') + i+1) + str(j)
-      constraints.append(grid[cell])
-
-  elif direction == 'R':
-    for j in range(grid_length, 0, -1):
-      cell = chr(ord('@') + i+1) + str(j)
-      constraints.append(grid[cell])
-
-  elif direction == 'T':
-    for j in range(grid_length):
-      cell = chr(ord('@') + j+1) + str(i+1)
-      constraints.append(grid[cell])
-
-  elif direction == 'B':
-    for j in range(grid_length - 1, -1, -1):
-      cell = chr(ord('@') + j+1) + str(i+1)
-      constraints.append(grid[cell])
-
-  return constraints
-
-def unique_sequences(constraints):
-  sequences = []
-
-  def helper(sequence_list, index):
-    for constraint in constraints[index]:
-      temp = sequence_list.copy()
-      if constraint in sequence_list:
-        continue
-
-      temp.append(constraint)
-
-      if index == len(constraints) - 1:
-        sequences.append(temp)
-      else:
-        helper(temp, index+1)
-
-  helper([], 0)
-
-  return sequences
 
 def clues_check(grid):
   for i in range(grid_length):
@@ -329,34 +238,63 @@ def clues_check(grid):
 
   return True
 
-def search(grid):
+def search(grid, states):
+
   if grid is None:
-    return None
+    return None, False, states
 
-  grid_seq = sequence_filtration(grid)
-
-  for cell in grid_seq:
-
-    for value in grid[cell] - grid_seq[cell]:
-      remove_value(grid, cell, value)
-
-
+  states += 1
   cell = min((c for c in cells if len(grid[c]) > 1), default = None, key= lambda c: len(grid[c]))
-
   if cell is None:
-    return grid
+    return grid, clues_check(grid), states
 
   for possible_value in grid[cell].copy():
 
     grid_copy = copy.deepcopy(grid)
+    # Inference rules are applied in the assign function to narrow down possible cell values
     assigned_grid = assign(grid_copy, cell, possible_value)
-    temp_grid = search(assigned_grid)
+    temp_grid, valid_clues_check, states = search(assigned_grid, states)
 
-    # If the grid is not None, then a solution is found
-    if temp_grid is not None and clues_check(temp_grid):
-      return temp_grid
+    # If the grid is not None and passed clue check, then a solution is found
+    if temp_grid is not None and valid_clues_check:
+      return temp_grid, valid_clues_check, states
 
-  return None
+  return None, False, states
+
+def verify_solution(grid, left_clues, right_clues, top_clues, bottom_clues):
+
+  grid_length = int(math.sqrt(len(grid)))
+
+  rows = [chr(ord('@')+number) for number in range(1, grid_length + 1)]
+  columns = [str(number) for number in range(1, grid_length + 1)]
+
+  row_ordered_cells = tuple(letter + digit for letter in rows for digit in columns)
+  column_ordered_cells = tuple(letter + digit for digit in columns for letter in rows)
+
+  for cell in row_ordered_cells:
+    if len(grid[cell]) != 1:
+      return False
+
+  if clues_check(grid):
+
+    for i in range(grid_length):
+      row = row_ordered_cells[i*grid_length: (i*grid_length) + grid_length]
+      s = set()
+      for cell in row:
+        if str(grid[cell]) in s:
+          return False
+        s.add(str(grid[cell]))
+
+      column = column_ordered_cells[i*grid_length: (i*grid_length) + grid_length]
+      s = set()
+      for cell in column:
+        if str(grid[cell]) in s:
+          return False
+        s.add(str(grid[cell]))
+
+    return True
+
+  return False
 
 class InputBox:
     def __init__(self, x, y, width, height, text=''):
@@ -397,11 +335,12 @@ class TextBox:
         pygame.draw.rect(screen, pygame.Color('black'), self.rect, 2)
 
 class Button:
-    def __init__(self, x, y, width, height, text):
+    def __init__(self, x, y, width, height, text, max_value=9, increment_on_click=False):
         self.rect = pygame.Rect(x, y, width, height)
         self.color = pygame.Color('blue')
         self.text = text
-        
+        self.max_value = max_value
+        self.increment_on_click = increment_on_click
 
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect)
@@ -409,43 +348,100 @@ class Button:
         screen.blit(txt_surface, (self.rect.x + 10, self.rect.y + 10))
 
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
+        if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
+          if self.increment_on_click:
+                current_value = int(self.text)
+                current_value = (current_value + 1) % (self.max_value + 1)
+                self.text = str(current_value)
+          else:
                 if self.text == "Solve":
-                    grid.clues = []
+                    global state_counter
+
+                    valid.text = ""
+    
+                    for box in grid2.input_boxes:
+                        box.text = ""
+                    grid2.clues = []
                     holder = []
+                    grid2.answer = []
+
                     i = 0
                     
-                    for box in grid.clue_boxes:
-                        # print(box.text)
-                        if i != grid.size - 1:
-                            holder.append(int(box.text))
+                    for box in grid2.clue_boxes:
+                        if i != grid2.size - 1:
+                            holder.append(int('0' if box.text == '' else box.text))
                             i += 1
                         else:
-                            holder.append(int(box.text))
+                            holder.append(int('0' if box.text == '' else box.text))
                             i = 0
-                            grid.clues.append(holder)
+                            grid2.clues.append(holder)
                             holder = []
-                    print(grid.clues)
-                    # try:
-                    #     grid.solution()
-                    #     valid.text = "Possible"
-                    #     grid.fill_in()
-                    # except Exception as e:
-                    #     print(e)
-                    #     valid.text = "Not Possible"
-                    grid.solution()
-                    
 
+                    try:
+                        state_counter = 0
+                        grid2.solution()
+                        valid.text = "Possible"
+                        grid2.fill_in()
+                    except Exception as e:
+                        valid.text = "Not Possible"
+                    
+                      
+                    try:
+                      solution = solve_skyscraper(grid2.size, top_clues, bottom_clues, left_clues, right_clues)
+
+                      if counter < 100000:
+                         backtrack_states.text = f"BT: {counter}"
+                      
+                    except Exception as e:
+                       print(e)
 
                 elif self.text == "Clear Board":
                     valid.text = ""
-                    for box in grid.clue_boxes:
-                        # print(box)
+                    for box in grid2.clue_boxes:
+                        box.text = "0"
+                    for box in grid2.input_boxes:
                         box.text = ""
-                    for box in grid.input_boxes:
-                        # print(box)
-                        box.text = ""
+                    
+                    backtrack_states.text = "BT: "
+                    num_states.text = "CP: "
+                
+                elif  self.text == "Create":
+                    new_size = int(new_grid_size.text) if new_grid_size.text.isdigit() else 4  
+                    grid2.__init__(new_size, start_x, start_y, [[0] * new_size] * 4)  
+                    grid2.setup_board(grid2.clues)  
+                    # print(f"Grid resized to: {new_size}x{new_size}")
+
+                    new_width = grid2.width + 200
+                    new_height = grid2.y + 200
+
+                    global screen  
+                    screen = pygame.display.set_mode((new_width, new_height))
+
+                    # print(f"Screen resized to: {new_width}x{new_height}")
+                    clear_button.rect.topleft = (50, new_height - 50)
+                    valid.rect.topleft = (225, new_height - 50)
+                    
+                    solve_button.rect.topleft = (400, new_height - 50)
+
+                    num_states.rect.topleft = (new_width - 150, (new_height/2) - 100)
+
+                    backtrack_states.rect.topleft = (new_width - 150, (new_height/2) - 150)
+
+                    decrease_btn.rect.topleft = (new_width - 150, (new_height/2) - 50)
+                    new_grid_size.rect.topleft = (new_width - 100, (new_height/2) - 50)
+                    increase_btn.rect.topleft = (new_width - 50, (new_height/2) - 50)
+
+                    size_button.rect.topleft = (new_width - 150, new_height/2)
+
+                elif self.text == "+":
+                  current_value = int(new_grid_size.text)
+                  current_value = (current_value + 1)
+                  new_grid_size.text = str(current_value)
+                
+                elif self.text == "-":
+                  current_value = int(new_grid_size.text)
+                  current_value = (current_value - 1)
+                  new_grid_size.text = str(current_value)
  
 class board:
     def __init__(self, size, start_x, start_y, clues):
@@ -458,9 +454,6 @@ class board:
         self.answer = []
         self.clues = clues
         
-
-        # self.solution()
-
     def setup_board(self, clues):
         holder = []
         i = 0 
@@ -491,7 +484,7 @@ class board:
         right_clues_x = self.width - 100
         holder = self.start
         for row in range(self.size):
-            self.clue_boxes.append(InputBox(left_clues_x, self.start, 30, 32, ""))
+            self.clue_boxes.append(Button(left_clues_x, self.start, 30, 32, "0", grid2.size, True))
             self.start += 50
 
         # top
@@ -500,7 +493,7 @@ class board:
         bottom_clues_y = self.y + 20
         x_offset = 125
         for col in range(self.size):
-            self.clue_boxes.append(InputBox(x_offset, top_clues_y, 30, 32, ""))
+            self.clue_boxes.append(Button(x_offset, top_clues_y, 30, 32, "0", grid2.size, True))
             x_offset += 100
 
         # right
@@ -508,7 +501,7 @@ class board:
         right_clues_x = self.width - 100
         self.start = holder
         for row in range(self.size):
-            self.clue_boxes.append(InputBox(right_clues_x, self.start, 30, 32, ""))
+            self.clue_boxes.append(Button(right_clues_x, self.start, 30, 32, "0",grid2.size, True))
             self.start += 50
 
         # bottom
@@ -518,7 +511,7 @@ class board:
         x_offset = 125
 
         for col in range(self.size):
-            self.clue_boxes.append(InputBox(x_offset, bottom_clues_y, 30, 32, ""))
+            self.clue_boxes.append(Button(x_offset, bottom_clues_y, 30, 32, "0", grid2.size, True))
             x_offset += 100
     
     def solution(self):
@@ -527,6 +520,23 @@ class board:
         global top_clues
         global bottom_clues
         global grid_length
+        global left_clues
+        global right_clues
+        global top_clues
+        global bottom_clues
+        global grid_length
+        global cells, groupings, neighbors
+        global grid
+        global cells
+        global grid_seq
+        global sol
+        global states
+        global rows
+        global columns
+        global start
+        global end
+        global valid_clues_check
+
         # left 0
         # top 1
         # right 2
@@ -539,33 +549,35 @@ class board:
         right_clues = self.clues[2]
         bottom_clues = self.clues[3]
 
-        # print()
+        rows = [chr(ord('@')+number) for number in range(1, grid_length + 1)]
 
-        cells, groupings, neighbors = create_groupings_and_neighbors(left_clues, right_clues, top_clues, bottom_clues)
+        columns = [str(number) for number in range(1, grid_length+1)]
 
-        print(cells)
+        cells = tuple(letter + digit for letter in rows for digit in columns)
 
-        grid = initialize_grid(grid_length, cells, left_clues, right_clues, top_clues, bottom_clues)
+        groupings = {c: tuple([[c[0] + digit for digit in columns],[letter + c[1] for letter in rows]])  for c in cells}
+
+        neighbors = {c: set(tuple([c[0] + digit for digit in columns] + [letter + c[1] for letter in rows])) for c in cells}
 
         for cell in cells:
-          if len(grid[cell]) == 1:
-            for val in grid[cell]:
-              grid = assign(grid, cell, val)
+          neighbors[cell].remove(cell)
 
-        grid_seq = sequence_filtration(grid)
+        grid = initialize_grid(grid_length, cells, left_clues, right_clues, top_clues, bottom_clues)
+        states = 0
+        start = time.time()
+        sol, valid_clues_check, states = search(grid, states)
+        end = time.time()
+        print(end - start)
+        print(verify_solution(sol, left_clues, right_clues, top_clues, bottom_clues))
+        print("States explored:", states)
+        print(sol)
 
-        for cell in grid_seq:
-        
-          for value in grid[cell] - grid_seq[cell]:
-            remove_value(grid, cell, value)
-
-        sol = search(grid)
-        print(sol.keys())
+        num_states.text = f"CP: {states}"
 
         i = 1
         holder = []
         for key in sol.keys():
-            if i != 4:
+            if i != self.size:
                 holder.append(list(sol[key])[0])
                 i+=1
             else:
@@ -573,15 +585,15 @@ class board:
                 holder.append(list(sol[key])[0])
                 self.answer.append(holder)
                 holder = []
-                i = 1
-        # self.answer.append(holder)
-        print(self.answer)    
+                i = 1  
 
     def fill_in(self):
         i = 0
         j = 0
+        print(self.answer)
+        print(grid2.size)
         for box in self.input_boxes:
-            if j != 3:
+            if j != grid2.size - 1:
                 box.text = str(self.answer[i][j])
                 j += 1
             else:
@@ -589,11 +601,37 @@ class board:
                 j = 0
                 i += 1
 
+left_clues = [2,2,1,4,4]
+right_clues = [4,3,3,2,1]
+top_clues = [3,1,2,3,5]
+bottom_clues = [2,3,3,2,1]
 
+grid_length = len(left_clues)
+
+
+rows = [chr(ord('@')+number) for number in range(1, grid_length + 1)]
+
+columns = [str(number) for number in range(1, grid_length+1)]
+
+cells = tuple(letter + digit for letter in rows for digit in columns)
+
+groupings = {c: tuple([[c[0] + digit for digit in columns],[letter + c[1] for letter in rows]])  for c in cells}
+
+neighbors = {c: set(tuple([c[0] + digit for digit in columns] + [letter + c[1] for letter in rows])) for c in cells}
+
+for cell in cells:
+  neighbors[cell].remove(cell)
+
+grid = initialize_grid(grid_length, cells, left_clues, right_clues, top_clues, bottom_clues)
+states = 0
+start = time.time()
+sol, valid_clues_check, states = search(grid, states)
+end = time.time()
 
 start_x = 125
 start_y = 100
 grid_size = 5
+state_counter = 0
 
 # left 0
 # top 1
@@ -608,25 +646,33 @@ clues = [
 ]
 
 
-grid = board(grid_size, start_x, start_y, clues)
-grid.setup_board(clues)
+grid2 = board(grid_size, start_x, start_y, clues)
+grid2.setup_board(clues)
 
 pygame.init()
 
 # Screen dimensions
-screen = pygame.display.set_mode((grid.width + 150, grid.y + 150))
+screen = pygame.display.set_mode((grid2.width + 150, grid2.y + 150))
 
 font = pygame.font.Font(None, 32)
 
-valid = TextBox(225, grid.y + 100, 150, 40,"")
+clear_button = Button(50, grid2.y + 100, 150, 40, "Clear Board", False)
 
-clear_button = Button(50, grid.y + 100, 150, 40, "Clear Board")
+valid = TextBox(225, grid2.y + 100, 150, 40,"")
 
-solve_button = Button(400, grid.y + 100, 150, 40, "Solve")
+backtrack_states = TextBox(grid2.width, grid2.y - 240, 150, 40, "BT: ")
 
-new_grid_size = InputBox(615, grid.y - 125, 150, 40, "")
+num_states = TextBox(grid2.width, grid2.y - 180, 150, 40, "CP: ")
 
-size_button = Button(615, grid.y - 50, 150, 40, "Create")
+solve_button = Button(415, grid2.y + 100, 150, 40, "Solve", False)
+
+decrease_btn = Button(grid2.width, grid2.y - 125, 50, 40, "-", False)
+
+new_grid_size = InputBox(grid2.width + 50, grid2.y - 125, 150, 40, f"{grid_length}")
+
+increase_btn = Button(grid2.width + 150 - 50, grid2.y - 125, 50, 40, "+", False)
+
+size_button = Button(grid2.width, grid2.y - 50, 150, 40, "Create", False)
 
 
 running = True
@@ -634,26 +680,32 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        for box in grid.clue_boxes:
+        for box in grid2.clue_boxes:
             box.handle_event(event)
-        # new_grid_size.handle_event(event)
+        new_grid_size.handle_event(event)
         clear_button.handle_event(event)
         solve_button.handle_event(event)
-        # size_button.handle_event(event)
+        size_button.handle_event(event)
+        decrease_btn.handle_event(event)
+        increase_btn.handle_event(event)
 
     screen.fill((255, 255, 255))
 
-    for box in grid.input_boxes:
+    for box in grid2.input_boxes:
         box.draw(screen)
 
-    for clue in grid.clue_boxes:
+    for clue in grid2.clue_boxes:
         clue.draw(screen)
 
+    num_states.draw(screen)
     valid.draw(screen)
     clear_button.draw(screen)
     solve_button.draw(screen)
-    # size_button.draw(screen)
-    # new_grid_size.draw(screen)
+    size_button.draw(screen)
+    new_grid_size.draw(screen)
+    decrease_btn.draw(screen)
+    increase_btn.draw(screen)
+    backtrack_states.draw(screen)
 
     pygame.display.flip()
 
