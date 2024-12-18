@@ -2,11 +2,10 @@ import pygame
 import copy
 import time
 import math
-
+import itertools
 counter = 0
 
-import itertools
-
+# Brute Force Algorithm
 def is_valid_view(row, view):
     max_height = 0
     visible = 0
@@ -56,6 +55,7 @@ def print_solution(solution):
         print("No solution found")
 
 
+# Constraint Propagation Algorithm
 def process_clues(grid, grid_length, clues, direction):
 
   for i in range(len(clues)):
