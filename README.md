@@ -5,6 +5,8 @@ This project provides a **user-friendly GUI** where you can:
 - Solve the puzzle automatically.
 - Clear the board for a fresh start.
 - Generate new grid size puzzle.
+- View how many states are created for the Brute Force apporach and Constraint Propagation
+- View the runtime of the Constraint Porpagation algorithm
 
 ---
 

@@ -401,12 +401,12 @@ class Button:
                         box.text = "0"
                     for box in grid2.input_boxes:
                         box.text = ""
-                    
+                    runtime.text = "Runtime: "
                     backtrack_states.text = "BF: "
                     num_states.text = "CP: "
                 
                 elif  self.text == "Create":
-                    
+                    runtime.text = "Runtime: "
                     valid.text = ""
                     backtrack_states.text = "BF: "
                     num_states.text = "CP: "
@@ -431,6 +431,8 @@ class Button:
                     num_states.rect.topleft = (new_width - 150, (new_height/2) - 100)
 
                     backtrack_states.rect.topleft = (new_width - 150, (new_height/2) - 150)
+
+                    runtime.rect.topleft = (new_width - 220, (new_height/2) - 200)
 
                     decrease_btn.rect.topleft = (new_width - 150, (new_height/2) - 50)
                     new_grid_size.rect.topleft = (new_width - 100, (new_height/2) - 50)
@@ -572,10 +574,11 @@ class board:
         start = time.time()
         sol, valid_clues_check, states = search(grid, states)
         end = time.time()
-        print(end - start)
-        print(verify_solution(sol, left_clues, right_clues, top_clues, bottom_clues))
+        print(f"Time(seconds): {end - start}")
+        runtime.text = f"Runtime: {(end-start):.4f} sec"
+        # print(verify_solution(sol, left_clues, right_clues, top_clues, bottom_clues))
         print("States explored:", states)
-        print(sol)
+        # print(sol)
 
         num_states.text = f"CP: {states}"
 
@@ -595,8 +598,6 @@ class board:
     def fill_in(self):
         i = 0
         j = 0
-        print(self.answer)
-        print(grid2.size)
         for box in self.input_boxes:
             if j != grid2.size - 1:
                 box.text = str(self.answer[i][j])
@@ -669,6 +670,8 @@ backtrack_states = TextBox(grid2.width, grid2.y - 240, 150, 40, "BF: ")
 
 num_states = TextBox(grid2.width, grid2.y - 180, 150, 40, "CP: ")
 
+runtime = TextBox(grid2.width - 80, grid2.y - 300, 220, 40, "Runtime: ")
+
 solve_button = Button(415, grid2.y + 100, 150, 40, "Solve", False)
 
 decrease_btn = Button(grid2.width, grid2.y - 125, 50, 40, "-", False)
@@ -702,6 +705,7 @@ while running:
     for clue in grid2.clue_boxes:
         clue.draw(screen)
 
+    runtime.draw(screen)
     num_states.draw(screen)
     valid.draw(screen)
     clear_button.draw(screen)
