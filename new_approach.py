@@ -37,7 +37,7 @@ def solve_skyscraper(n, top, bottom, left, right):
     for grid in itertools.product(all_permutations, repeat=n):
         counter += 1
         if counter > 100000:
-           backtrack_states.text = "BT: 100,000+"
+           backtrack_states.text = "BF: 100,000+"
            break
         # print(f"\r{counter}", end="", flush=True)
         # time.sleep(0.0002)  # Uncommenting will add a small delay for visibility
@@ -390,7 +390,7 @@ class Button:
                       solution = solve_skyscraper(grid2.size, top_clues, bottom_clues, left_clues, right_clues)
 
                       if counter < 100000:
-                         backtrack_states.text = f"BT: {counter}"
+                         backtrack_states.text = f"BF: {counter}"
                       
                     except Exception as e:
                        print(e)
@@ -402,10 +402,15 @@ class Button:
                     for box in grid2.input_boxes:
                         box.text = ""
                     
-                    backtrack_states.text = "BT: "
+                    backtrack_states.text = "BF: "
                     num_states.text = "CP: "
                 
                 elif  self.text == "Create":
+                    
+                    valid.text = ""
+                    backtrack_states.text = "BF: "
+                    num_states.text = "CP: "
+                    
                     new_size = int(new_grid_size.text) if new_grid_size.text.isdigit() else 4  
                     grid2.__init__(new_size, start_x, start_y, [[0] * new_size] * 4)  
                     grid2.setup_board(grid2.clues)  
@@ -660,7 +665,7 @@ clear_button = Button(50, grid2.y + 100, 150, 40, "Clear Board", False)
 
 valid = TextBox(225, grid2.y + 100, 150, 40,"")
 
-backtrack_states = TextBox(grid2.width, grid2.y - 240, 150, 40, "BT: ")
+backtrack_states = TextBox(grid2.width, grid2.y - 240, 150, 40, "BF: ")
 
 num_states = TextBox(grid2.width, grid2.y - 180, 150, 40, "CP: ")
 
