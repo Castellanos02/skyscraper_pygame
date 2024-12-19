@@ -19,7 +19,6 @@ Install dependencies using:
 
 ```
 pip install pygame
-pip install pip
 ```
 ---
 
