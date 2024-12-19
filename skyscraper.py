@@ -335,9 +335,9 @@ class TextBox:
         pygame.draw.rect(screen, pygame.Color('black'), self.rect, 2)
 
 class Button:
-    def __init__(self, x, y, width, height, text, max_value=9, increment_on_click=False):
+    def __init__(self, x, y, width, height, text, max_value=9, increment_on_click=False, color='blue'):
         self.rect = pygame.Rect(x, y, width, height)
-        self.color = pygame.Color('blue')
+        self.color = pygame.Color(color)
         self.text = text
         self.max_value = max_value
         self.increment_on_click = increment_on_click
@@ -359,8 +359,8 @@ class Button:
 
                     valid.text = ""
     
-                    for box in grid2.input_boxes:
-                        box.text = ""
+                    # for box in grid2.input_boxes:
+                        # box.text = ""
                     grid2.clues = []
                     holder = []
                     grid2.answer = []
@@ -376,6 +376,11 @@ class Button:
                             i = 0
                             grid2.clues.append(holder)
                             holder = []
+
+                    # state_counter = 0
+                    # grid2.solution()
+                    # valid.text = "Possible"
+                    # grid2.fill_in()
 
                     try:
                         state_counter = 0
@@ -400,7 +405,7 @@ class Button:
                     for box in grid2.clue_boxes:
                         box.text = "0"
                     for box in grid2.input_boxes:
-                        box.text = ""
+                        box.text = "0"
                     runtime.text = "Runtime: "
                     backtrack_states.text = "BF: "
                     num_states.text = "CP: "
@@ -468,7 +473,7 @@ class board:
         for col in range(self.size):
             self.x = 125
             for row in range(self.size):
-                self.input_boxes.append(TextBox(self.x, self.y, 20, 32))
+                self.input_boxes.append(Button(self.x, self.y, 30, 32, "0",self.size, True, "black"))
                 self.x += 100
                 if i == 0:
                     holder.append(self.x)
@@ -551,6 +556,7 @@ class board:
 
         grid_length = self.size
 
+
         left_clues = self.clues[0]
         top_clues = self.clues[1]
         right_clues = self.clues[2]
@@ -570,6 +576,16 @@ class board:
           neighbors[cell].remove(cell)
 
         grid = initialize_grid(grid_length, cells, left_clues, right_clues, top_clues, bottom_clues)
+
+        # add assign
+        i = 0
+        j = 0
+        keys  = list(grid.keys())
+        for box in grid2.input_boxes:
+          if box.text != "0":
+            assign(grid, keys[i], int(box.text))
+          i += 1
+
         states = 0
         start = time.time()
         sol, valid_clues_check, states = search(grid, states)
@@ -690,6 +706,8 @@ while running:
             running = False
         for box in grid2.clue_boxes:
             box.handle_event(event)
+        for box in grid2.input_boxes:
+           box.handle_event(event)
         new_grid_size.handle_event(event)
         clear_button.handle_event(event)
         solve_button.handle_event(event)

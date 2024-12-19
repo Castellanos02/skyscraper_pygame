@@ -5,7 +5,7 @@ This project provides a **user-friendly GUI** where you can:
 - Solve the puzzle automatically.
 - Clear the board for a fresh start.
 - Generate new grid size puzzle.
-- View how many states are created for the Brute Force apporach and Constraint Propagation
+- View how many states are created for the Brute Force (BF) apporach and Constraint Propagation (CP)
 - View the runtime of the Constraint Porpagation algorithm
 
 ---
@@ -14,7 +14,8 @@ This project provides a **user-friendly GUI** where you can:
 
 1. **Launch the Program**.
 2. Use the **grid** to interact with the puzzle:
-   - Edge clues indicate visibility constraints.
+   - Edge clues indicate visibility constraints (Blue boxes)
+   - Assign values to cells (Black boxes)
 3. Utilize the buttons to control the puzzle:
    - **Clear Board**: Reset the puzzle grid.
    - **Solve**: Automatically solve the puzzle.
