@@ -17,10 +17,10 @@ This project provides a **user-friendly GUI** where you can:
 
 Install dependencies using:
 
-'''
+```
 pip install pygame
 pip install pip
-'''
+```
 ---
 
 ## How to Use
