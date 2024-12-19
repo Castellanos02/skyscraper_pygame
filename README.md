@@ -16,9 +16,11 @@ This project provides a **user-friendly GUI** where you can:
 - **Pip**
 
 Install dependencies using:
-pip install pygame
-pip install pygame
 
+'''
+pip install pygame
+pip install pip
+'''
 ---
 
 ## How to Use
