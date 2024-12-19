@@ -10,6 +10,17 @@ This project provides a **user-friendly GUI** where you can:
 
 ---
 
+## Dependencies
+
+- **Pygame**
+- **Pip**
+
+Install dependencies using:
+pip install pygame
+pip install pygame
+
+---
+
 ## How to Use
 
 1. **Launch the Program**.
@@ -34,12 +45,3 @@ The Skyscraper Puzzle follows these rules:
    - A taller skyscraper blocks shorter ones behind it.
    - Example: Clue `3` means 3 skyscrapers are visible in that row or column.
 4. The goal is to fill the grid so all visibility clues are satisfied.
-
----
-
-## Dependencies
-
-- **Pygame**
-
-Install dependencies using:
-pip install pygame
